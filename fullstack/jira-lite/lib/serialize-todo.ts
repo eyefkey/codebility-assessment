@@ -10,6 +10,11 @@ import {
 type TodoWithOwner = {
   id: string;
   title: string;
+  description: string | null;
+  problem: string | null;
+  acceptanceCriteria: string | null;
+  technicalImplementation: string | null;
+  points: number;
   status: TodoStatus;
   createdAt: Date;
   userId: string;
@@ -22,6 +27,11 @@ export function serializeTodo(todo: TodoWithOwner, viewer: CurrentUser) {
   return {
     id: todo.id,
     title: todo.title,
+    description: todo.description,
+    problem: todo.problem,
+    acceptanceCriteria: todo.acceptanceCriteria,
+    technicalImplementation: todo.technicalImplementation,
+    points: todo.points,
     status: todo.status,
     createdAt: todo.createdAt.toISOString(),
     owner: { id: todo.user.id, name: todo.user.name },

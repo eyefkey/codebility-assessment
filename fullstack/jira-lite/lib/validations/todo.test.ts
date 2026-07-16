@@ -45,6 +45,53 @@ describe("createTodoSchema", () => {
     const result = createTodoSchema.safeParse({ title: 123 });
     expect(result.success).toBe(false);
   });
+
+  it("accepts the detail fields and points", () => {
+    const result = createTodoSchema.safeParse({
+      title: "Add login page",
+      description: "Users need a way to sign in.",
+      problem: "There is no login page yet.",
+      acceptanceCriteria: "User can log in with email and password.",
+      technicalImplementation: "Use NextAuth Credentials provider.",
+      points: 10,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.points).toBe(10);
+    }
+  });
+
+  it("defaults detail fields and points to undefined when omitted", () => {
+    const result = createTodoSchema.safeParse({ title: "Buy milk" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.points).toBeUndefined();
+      expect(result.data.description).toBeUndefined();
+    }
+  });
+
+  it("rejects negative points", () => {
+    const result = createTodoSchema.safeParse({ title: "Buy milk", points: -1 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects points over 100", () => {
+    const result = createTodoSchema.safeParse({ title: "Buy milk", points: 101 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-integer points value", () => {
+    const result = createTodoSchema.safeParse({ title: "Buy milk", points: 3.5 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a description over 2000 characters", () => {
+    const result = createTodoSchema.safeParse({
+      title: "Buy milk",
+      description: "a".repeat(2001),
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("updateTodoSchema", () => {

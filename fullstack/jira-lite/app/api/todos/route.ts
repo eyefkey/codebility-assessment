@@ -54,9 +54,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const { title, description, problem, acceptanceCriteria, technicalImplementation, points } =
+    parsed.data;
+
   const todo = await prisma.todo.create({
     data: {
-      title: parsed.data.title,
+      title,
+      description,
+      problem,
+      acceptanceCriteria,
+      technicalImplementation,
+      points,
       userId: currentUser.id,
       status: currentUser.role === "QA" ? "READY_FOR_TESTING" : "TO_DO",
     },

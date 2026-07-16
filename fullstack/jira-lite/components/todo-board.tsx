@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { CreateTicketModal, type NewTicketInput } from "@/components/create-ticket-modal";
+
 type TodoStatus =
   | "TO_DO"
   | "IN_PROGRESS"
@@ -12,6 +14,7 @@ type TodoStatus =
 type Todo = {
   id: string;
   title: string;
+  points: number;
   status: TodoStatus;
   createdAt: string;
   owner: { id: string; name: string };
@@ -39,39 +42,25 @@ export function TodoBoard({
   initialTodos: Todo[];
 }) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
-  const [title, setTitle] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
-  async function handleCreate(event: React.FormEvent) {
-    event.preventDefault();
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+  async function handleCreate(input: NewTicketInput) {
+    const response = await fetch("/api/todos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
 
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/todos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: trimmedTitle }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error ?? "Failed to create todo");
-      }
-
+    if (!response.ok) {
       const data = await response.json();
-      setTodos((prev) => [data.todo, ...prev]);
-      setTitle("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsSubmitting(false);
+      throw new Error(data.error ?? "Failed to create ticket");
     }
+
+    const data = await response.json();
+    setTodos((prev) => [data.todo, ...prev]);
+    setIsModalOpen(false);
   }
 
   async function handleStatusChange(todo: Todo, status: TodoStatus) {
@@ -127,24 +116,14 @@ export function TodoBoard({
 
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-1 flex-col gap-6 px-6 py-8">
-      <form onSubmit={handleCreate} className="flex gap-2">
-        <input
-          type="text"
-          required
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs doing?"
-          maxLength={200}
-          className="flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 user-invalid:border-red-500 user-invalid:text-red-600 user-invalid:focus:border-red-500 user-invalid:focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:user-invalid:border-red-500 dark:user-invalid:text-red-400"
-        />
+      <div className="flex justify-end">
         <button
-          type="submit"
-          disabled={isSubmitting || !title.trim()}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+          onClick={() => setIsModalOpen(true)}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
-          Add
+          New ticket
         </button>
-      </form>
+      </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
@@ -181,6 +160,10 @@ export function TodoBoard({
           );
         })}
       </div>
+
+      {isModalOpen && (
+        <CreateTicketModal onClose={() => setIsModalOpen(false)} onCreate={handleCreate} />
+      )}
     </div>
   );
 }
@@ -225,7 +208,7 @@ function TodoCard({
         )}
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-zinc-400 dark:text-zinc-600">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 dark:text-zinc-600">
         {new Date(todo.createdAt).toLocaleDateString(undefined, {
           month: "short",
           day: "numeric",
@@ -234,6 +217,11 @@ function TodoCard({
         <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
           {todo.owner.name}
         </span>
+        {todo.points > 0 && (
+          <span className="rounded-full bg-blue-100 px-2 py-0.5 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+            {todo.points} pts
+          </span>
+        )}
       </div>
 
       {canChangeStatus ? (

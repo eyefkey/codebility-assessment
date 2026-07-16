@@ -40,10 +40,15 @@ enum TodoStatus {
 }
 
 model Todo {
-  id        String     @id @default(cuid())
-  title     String
-  status    TodoStatus @default(TO_DO)
-  createdAt DateTime   @default(now())
-  userId    String
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                      String     @id @default(cuid())
+  title                   String
+  description             String?
+  problem                 String?
+  acceptanceCriteria      String?
+  technicalImplementation String?
+  points                  Int        @default(0)
+  status                  TodoStatus @default(TO_DO)
+  createdAt               DateTime   @default(now())
+  userId                  String
+  user                    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
