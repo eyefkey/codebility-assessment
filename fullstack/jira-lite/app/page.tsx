@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function Home() {
   const session = await auth();
@@ -10,7 +11,10 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+    <main className="relative flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="flex items-center gap-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
         <span className="flex h-9 w-9 items-center justify-center rounded-md bg-blue-600 text-base font-bold text-white">
           J

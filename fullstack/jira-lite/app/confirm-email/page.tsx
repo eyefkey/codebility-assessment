@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export default async function ConfirmEmailPage({
   searchParams,
 }: {
@@ -8,7 +10,10 @@ export default async function ConfirmEmailPage({
   const { email } = await searchParams;
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6">
+    <main className="relative flex flex-1 items-center justify-center px-6">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-2xl dark:bg-blue-950">
           📧

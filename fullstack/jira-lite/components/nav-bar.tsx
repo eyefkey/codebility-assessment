@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 type Member = {
   id: string;
   name: string;
@@ -72,6 +74,7 @@ export function NavBar({
             )}
           </div>
         )}
+        <ThemeToggle />
         <span className="text-sm text-zinc-600 dark:text-zinc-400">{userLabel}</span>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}

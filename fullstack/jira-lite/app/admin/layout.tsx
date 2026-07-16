@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { isAdmin } from "@/lib/authorization";
 import { getCurrentUser } from "@/lib/current-user";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const currentUser = await getCurrentUser();
@@ -35,6 +36,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           >
             Back to todos
           </Link>
+          <div className="flex items-center">
+            <ThemeToggle />
+          </div>
         </nav>
       </div>
       <div className="mx-auto w-full max-w-4xl flex-1 px-6 py-8">{children}</div>
