@@ -1,26 +1,44 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
+import { serializeTodo } from "@/lib/serialize-todo";
 import { createTodoSchema } from "@/lib/validations/todo";
 
+const OWNER_SELECT = {
+  user: { select: { id: true, name: true, groupId: true } },
+} as const;
+
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const todos = await prisma.todo.findMany({
-    where: { userId: session.user.id },
+    where:
+      currentUser.role === "ADMIN"
+        ? {}
+        : {
+            OR: [
+              { userId: currentUser.id },
+              ...(currentUser.groupId
+                ? [{ user: { groupId: currentUser.groupId } }]
+                : []),
+            ],
+          },
+    include: OWNER_SELECT,
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ todos });
+  return NextResponse.json({
+    todos: todos.map((todo) => serializeTodo(todo, currentUser)),
+  });
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,8 +52,12 @@ export async function POST(request: Request) {
   }
 
   const todo = await prisma.todo.create({
-    data: { title: parsed.data.title, userId: session.user.id },
+    data: { title: parsed.data.title, userId: currentUser.id },
+    include: OWNER_SELECT,
   });
 
-  return NextResponse.json({ todo }, { status: 201 });
+  return NextResponse.json(
+    { todo: serializeTodo(todo, currentUser) },
+    { status: 201 }
+  );
 }

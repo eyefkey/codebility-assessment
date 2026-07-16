@@ -6,11 +6,27 @@ datasource db {
   provider = "sqlite"
 }
 
+enum Role {
+  ADMIN
+  DEV
+  QA
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  members   User[]
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
   password  String
+  role      Role     @default(DEV)
+  groupId   String?
+  group     Group?   @relation(fields: [groupId], references: [id])
   createdAt DateTime @default(now())
   todos     Todo[]
 }

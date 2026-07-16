@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 
-export function NavBar({ userLabel }: { userLabel: string }) {
+export function NavBar({ userLabel, isAdmin }: { userLabel: string; isAdmin?: boolean }) {
   return (
     <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center gap-2 font-semibold text-zinc-900 dark:text-zinc-50">
@@ -12,6 +13,14 @@ export function NavBar({ userLabel }: { userLabel: string }) {
         jira-lite
       </div>
       <div className="flex items-center gap-4">
+        {isAdmin && (
+          <Link
+            href="/admin/groups"
+            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Admin
+          </Link>
+        )}
         <span className="text-sm text-zinc-600 dark:text-zinc-400">{userLabel}</span>
         <button
           onClick={() => signOut({ callbackUrl: "/" })}

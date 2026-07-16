@@ -7,26 +7,80 @@ const adapter = new PrismaBetterSqlite3({
 });
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
-  const email = "demo@example.com";
+async function upsertUser(params: {
+  name: string;
+  email: string;
+  role: "ADMIN" | "DEV" | "QA";
+  groupId?: string;
+}) {
   const password = await bcrypt.hash("password123", 10);
+  return prisma.user.upsert({
+    where: { email: params.email },
+    update: { role: params.role, groupId: params.groupId ?? null },
+    create: {
+      name: params.name,
+      email: params.email,
+      password,
+      role: params.role,
+      groupId: params.groupId,
+    },
+  });
+}
 
-  const user = await prisma.user.upsert({
-    where: { email },
+async function main() {
+  const group = await prisma.group.upsert({
+    where: { name: "Team Alpha" },
     update: {},
-    create: { name: "Demo User", email, password },
+    create: { name: "Team Alpha" },
+  });
+
+  const admin = await upsertUser({
+    name: "Admin User",
+    email: "admin@example.com",
+    role: "ADMIN",
+  });
+
+  const dev = await upsertUser({
+    name: "Dev User",
+    email: "dev@example.com",
+    role: "DEV",
+    groupId: group.id,
+  });
+
+  const qa = await upsertUser({
+    name: "QA User",
+    email: "qa@example.com",
+    role: "QA",
+    groupId: group.id,
+  });
+
+  const solo = await upsertUser({
+    name: "Solo Dev",
+    email: "solo@example.com",
+    role: "DEV",
+  });
+
+  await prisma.todo.deleteMany({
+    where: { userId: { in: [admin.id, dev.id, qa.id, solo.id] } },
   });
 
   await prisma.todo.createMany({
     data: [
-      { title: "Set up the project", completed: true, userId: user.id },
-      { title: "Wire up authentication", completed: true, userId: user.id },
-      { title: "Build the todo board", completed: false, userId: user.id },
-      { title: "Deploy to production", completed: false, userId: user.id },
+      { title: "Review the team's board layout", completed: true, userId: admin.id },
+      { title: "Wire up authentication", completed: true, userId: dev.id },
+      { title: "Build the todo board", completed: false, userId: dev.id },
+      { title: "Deploy to production", completed: false, userId: dev.id },
+      { title: "Write test cases for login flow", completed: true, userId: qa.id },
+      { title: "Verify todo CRUD on staging", completed: false, userId: qa.id },
+      { title: "Organize personal errands", completed: false, userId: solo.id },
     ],
   });
 
-  console.log(`Seeded demo user: ${email} / password123`);
+  console.log("Seeded:");
+  console.log("  admin@example.com / password123  (ADMIN, no group)");
+  console.log("  dev@example.com   / password123  (DEV, Team Alpha)");
+  console.log("  qa@example.com    / password123  (QA, Team Alpha)");
+  console.log("  solo@example.com  / password123  (DEV, no group)");
 }
 
 main()
