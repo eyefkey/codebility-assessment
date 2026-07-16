@@ -31,11 +31,19 @@ model User {
   todos     Todo[]
 }
 
+enum TodoStatus {
+  TO_DO
+  IN_PROGRESS
+  READY_FOR_TESTING
+  TESTED_AND_VERIFIED
+  COMPLETED
+}
+
 model Todo {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   title     String
-  completed Boolean  @default(false)
-  createdAt DateTime @default(now())
+  status    TodoStatus @default(TO_DO)
+  createdAt DateTime   @default(now())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

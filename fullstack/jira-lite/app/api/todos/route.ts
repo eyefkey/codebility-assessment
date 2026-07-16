@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { visibleColumnsFor } from "@/lib/authorization";
 import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { serializeTodo } from "@/lib/serialize-todo";
@@ -16,8 +17,9 @@ export async function GET() {
   }
 
   const todos = await prisma.todo.findMany({
-    where:
-      currentUser.role === "ADMIN"
+    where: {
+      status: { in: visibleColumnsFor(currentUser.role) },
+      ...(currentUser.role === "ADMIN"
         ? {}
         : {
             OR: [
@@ -26,7 +28,8 @@ export async function GET() {
                 ? [{ user: { groupId: currentUser.groupId } }]
                 : []),
             ],
-          },
+          }),
+    },
     include: OWNER_SELECT,
     orderBy: { createdAt: "desc" },
   });
@@ -52,7 +55,11 @@ export async function POST(request: Request) {
   }
 
   const todo = await prisma.todo.create({
-    data: { title: parsed.data.title, userId: currentUser.id },
+    data: {
+      title: parsed.data.title,
+      userId: currentUser.id,
+      status: currentUser.role === "QA" ? "READY_FOR_TESTING" : "TO_DO",
+    },
     include: OWNER_SELECT,
   });
 

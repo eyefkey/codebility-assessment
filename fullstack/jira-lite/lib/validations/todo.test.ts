@@ -48,8 +48,8 @@ describe("createTodoSchema", () => {
 });
 
 describe("updateTodoSchema", () => {
-  it("accepts just a completed flag", () => {
-    const result = updateTodoSchema.safeParse({ completed: true });
+  it("accepts just a status", () => {
+    const result = updateTodoSchema.safeParse({ status: "IN_PROGRESS" });
     expect(result.success).toBe(true);
   });
 
@@ -73,8 +73,8 @@ describe("updateTodoSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects a non-boolean completed value", () => {
-    const result = updateTodoSchema.safeParse({ completed: "true" });
+  it("rejects a status that isn't one of the known pipeline stages", () => {
+    const result = updateTodoSchema.safeParse({ status: "DONE" });
     expect(result.success).toBe(false);
   });
 });

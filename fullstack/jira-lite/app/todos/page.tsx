@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
-import { isAdmin } from "@/lib/authorization";
+import { isAdmin, visibleColumnsFor } from "@/lib/authorization";
 import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { serializeTodo } from "@/lib/serialize-todo";
@@ -19,29 +19,49 @@ export default async function TodosPage() {
     redirect("/login");
   }
 
-  const todos = await prisma.todo.findMany({
-    where:
-      currentUser.role === "ADMIN"
-        ? {}
-        : {
-            OR: [
-              { userId: currentUser.id },
-              ...(currentUser.groupId
-                ? [{ user: { groupId: currentUser.groupId } }]
-                : []),
-            ],
+  const columns = visibleColumnsFor(currentUser.role);
+
+  const [todos, group] = await Promise.all([
+    prisma.todo.findMany({
+      where: {
+        status: { in: columns },
+        ...(currentUser.role === "ADMIN"
+          ? {}
+          : {
+              OR: [
+                { userId: currentUser.id },
+                ...(currentUser.groupId
+                  ? [{ user: { groupId: currentUser.groupId } }]
+                  : []),
+              ],
+            }),
+      },
+      include: { user: { select: { id: true, name: true, groupId: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    currentUser.groupId
+      ? prisma.group.findUnique({
+          where: { id: currentUser.groupId },
+          select: {
+            name: true,
+            members: { select: { id: true, name: true, role: true } },
           },
-    include: { user: { select: { id: true, name: true, groupId: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+        })
+      : null,
+  ]);
 
   return (
     <div className="flex flex-1 flex-col">
       <NavBar
         userLabel={session.user.email ?? session.user.name ?? "Account"}
         isAdmin={isAdmin(currentUser)}
+        groupName={group?.name}
+        groupMembers={group?.members}
       />
-      <TodoBoard initialTodos={todos.map((todo) => serializeTodo(todo, currentUser))} />
+      <TodoBoard
+        columns={columns}
+        initialTodos={todos.map((todo) => serializeTodo(todo, currentUser))}
+      />
     </div>
   );
 }

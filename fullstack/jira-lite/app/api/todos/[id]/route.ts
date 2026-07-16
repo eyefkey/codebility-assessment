@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { canDeleteTodo, canEditTodo, canReadTodo, canToggleTodo } from "@/lib/authorization";
+import { allowedStatusTransitions, canDeleteTodo, canEditTodo, canReadTodo } from "@/lib/authorization";
 import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { serializeTodo } from "@/lib/serialize-todo";
@@ -36,7 +36,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Todo not found" }, { status: 404 });
   }
 
-  const { title, completed } = parsed.data;
+  const { title, status } = parsed.data;
 
   if (title !== undefined && !canEditTodo(currentUser, todo.userId)) {
     return NextResponse.json(
@@ -45,16 +45,16 @@ export async function PATCH(
     );
   }
 
-  if (completed !== undefined && !canToggleTodo(currentUser, owner)) {
+  if (status !== undefined && !allowedStatusTransitions(currentUser, owner).includes(status)) {
     return NextResponse.json(
-      { error: "You don't have permission to update this todo's status" },
+      { error: "You don't have permission to set this status" },
       { status: 403 }
     );
   }
 
   const updated = await prisma.todo.update({
     where: { id },
-    data: { title, completed },
+    data: { title, status },
     include: OWNER_SELECT,
   });
 

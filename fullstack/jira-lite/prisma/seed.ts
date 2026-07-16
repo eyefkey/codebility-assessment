@@ -66,13 +66,14 @@ async function main() {
 
   await prisma.todo.createMany({
     data: [
-      { title: "Review the team's board layout", completed: true, userId: admin.id },
-      { title: "Wire up authentication", completed: true, userId: dev.id },
-      { title: "Build the todo board", completed: false, userId: dev.id },
-      { title: "Deploy to production", completed: false, userId: dev.id },
-      { title: "Write test cases for login flow", completed: true, userId: qa.id },
-      { title: "Verify todo CRUD on staging", completed: false, userId: qa.id },
-      { title: "Organize personal errands", completed: false, userId: solo.id },
+      { title: "Review the team's board layout", status: "COMPLETED", userId: admin.id },
+      { title: "Set up the project", status: "TO_DO", userId: dev.id },
+      { title: "Wire up authentication", status: "IN_PROGRESS", userId: dev.id },
+      { title: "Build the todo board", status: "READY_FOR_TESTING", userId: dev.id },
+      { title: "Verify login flow", status: "READY_FOR_TESTING", userId: qa.id },
+      { title: "Verify todo CRUD on staging", status: "TESTED_AND_VERIFIED", userId: qa.id },
+      { title: "Sign off on release", status: "COMPLETED", userId: qa.id },
+      { title: "Organize personal errands", status: "TO_DO", userId: solo.id },
     ],
   });
 
