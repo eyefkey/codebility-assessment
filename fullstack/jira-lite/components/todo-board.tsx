@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { CreateTicketModal, type NewTicketInput } from "@/components/create-ticket-modal";
+import { ViewTicketModal } from "@/components/view-ticket-modal";
 
 type TodoStatus =
   | "TO_DO"
@@ -19,6 +20,10 @@ type Todo = {
   createdAt: string;
   owner: { id: string; name: string };
   isOwner: boolean;
+  description: string | null;
+  problem: string | null;
+  acceptanceCriteria: string | null;
+  technicalImplementation: string | null;
   permissions: {
     allowedStatuses: TodoStatus[];
     canEdit: boolean;
@@ -43,6 +48,7 @@ export function TodoBoard({
 }) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewingTodo, setViewingTodo] = useState<Todo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
@@ -152,6 +158,7 @@ export function TodoBoard({
                       isPending={pendingIds.has(todo.id)}
                       onStatusChange={(status) => handleStatusChange(todo, status)}
                       onDelete={() => handleDelete(todo)}
+                      onView={() => setViewingTodo(todo)}
                     />
                   ))
                 )}
@@ -163,6 +170,10 @@ export function TodoBoard({
 
       {isModalOpen && (
         <CreateTicketModal onClose={() => setIsModalOpen(false)} onCreate={handleCreate} />
+      )}
+
+      {viewingTodo && (
+        <ViewTicketModal ticket={viewingTodo} onClose={() => setViewingTodo(null)} />
       )}
     </div>
   );
@@ -181,11 +192,13 @@ function TodoCard({
   isPending,
   onStatusChange,
   onDelete,
+  onView,
 }: {
   todo: Todo;
   isPending: boolean;
   onStatusChange: (status: TodoStatus) => void;
   onDelete: () => void;
+  onView: () => void;
 }) {
   const canChangeStatus = todo.permissions.allowedStatuses.length > 0;
   const selectableStatuses = canChangeStatus
@@ -196,16 +209,24 @@ function TodoCard({
     <div className="flex flex-col gap-2 rounded-md border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm text-zinc-900 dark:text-zinc-50">{todo.title}</p>
-        {todo.permissions.canDelete && (
+        <div className="flex shrink-0 items-center gap-1">
           <button
-            onClick={onDelete}
-            disabled={isPending}
-            aria-label="Delete todo"
-            className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-950"
+            onClick={onView}
+            className="rounded px-1.5 py-0.5 text-xs font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           >
-            ✕
+            View
           </button>
-        )}
+          {todo.permissions.canDelete && (
+            <button
+              onClick={onDelete}
+              disabled={isPending}
+              aria-label="Delete todo"
+              className="rounded p-1 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:hover:bg-red-950"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 dark:text-zinc-600">
